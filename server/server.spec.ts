@@ -9,6 +9,7 @@ import { request as httpRequest, IncomingMessage } from 'node:http';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 let PORT: number;
 let serverProcess: ChildProcess;
+let serverStderr = '';
 
 function request(
   path: string,
@@ -65,6 +66,7 @@ describe('ksef-pdf HTTP server', () => {
       });
 
       serverProcess.stderr?.on('data', (data: Buffer) => {
+        serverStderr += data.toString();
         console.error('Server stderr:', data.toString());
       });
 
@@ -140,6 +142,20 @@ describe('ksef-pdf HTTP server', () => {
     expect(body.error).toBe('Internal server error');
     expect(body).toHaveProperty('requestId');
     expect(body.requestId.length).toBeGreaterThan(0);
+  });
+
+  it('POST /generate/pdf with malformed XML logs the kind of failure, never the document', async () => {
+    const secret = 'SECRET-TAX-ID-12345';
+    const res = await request('/generate/pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/xml' },
+      body: Buffer.from(`<a><b>${secret}</a>`),
+    });
+
+    expect(res.status).toBe(500);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    expect(serverStderr).toContain('parse_error');
+    expect(serverStderr).not.toContain(secret);
   });
 
   it('GET /nonexistent returns 404', async () => {

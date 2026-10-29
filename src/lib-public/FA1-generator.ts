@@ -1,8 +1,7 @@
 import pdfMake, { TCreatedPdf } from 'pdfmake/build/pdfmake';
-import pdfFonts from 'pdfmake/build/vfs_fonts';
 import { Content, TDocumentDefinitions } from 'pdfmake/interfaces';
 import { generateStyle, getValue, hasValue } from '../shared/PDF-functions';
-import { TRodzajFaktury } from '../shared/consts/const';
+import { ZamowienieKorekta } from './enums/invoice.enums';
 import { generateAdnotacje } from './generators/FA1/Adnotacje';
 import { generateDodatkoweInformacje } from './generators/FA1/DodatkoweInformacje';
 import { generatePlatnosc } from './generators/FA1/Platnosc';
@@ -17,18 +16,25 @@ import { generateDaneFaKorygowanej } from './generators/common/DaneFaKorygowanej
 import { generateNaglowek } from './generators/common/Naglowek';
 import { generateRozliczenie } from './generators/common/Rozliczenie';
 import { generateStopka } from './generators/common/Stopka';
-import { Faktura } from './types/fa1.types';
-import { ZamowienieKorekta } from './enums/invoice.enums';
 import { AdditionalDataTypes } from './types/common.types';
+import { Faktura } from './types/fa1.types';
+import { generateWatermark } from '@shared/consts/watermark';
+import pdfFonts from 'pdfmake/build/vfs_fonts';
+import { TRodzajFaktury } from '@shared/consts/FA.const';
+import { Position } from '@shared/enums/common.enum';
+import i18n from 'i18next';
 
-pdfMake.vfs = pdfFonts.vfs;
+pdfMake.addVirtualFileSystem(pdfFonts);
 
-export function buildFA1DocDefinition(invoice: Faktura, additionalData: AdditionalDataTypes): TDocumentDefinitions {
+export function buildFA1DocDefinition(
+  invoice: Faktura,
+  additionalData: AdditionalDataTypes
+): TDocumentDefinitions {
   const isKOR_RABAT: boolean =
     invoice.Fa?.RodzajFaktury?._text == TRodzajFaktury.KOR && hasValue(invoice.Fa?.OkresFaKorygowanej);
   const rabatOrRowsInvoice: Content = isKOR_RABAT ? generateRabat(invoice.Fa!) : generateWiersze(invoice.Fa!);
-
-  return {
+  const docDefinition: TDocumentDefinitions = {
+    ...generateWatermark(additionalData?.watermark),
     content: [
       ...generateNaglowek(invoice.Fa, additionalData),
       generateDaneFaKorygowanej(invoice.Fa),
@@ -51,8 +57,17 @@ export function buildFA1DocDefinition(invoice: Faktura, additionalData: Addition
       generateWarunkiTransakcji(invoice.Fa?.WarunkiTransakcji),
       ...generateStopka(additionalData, invoice.Stopka, invoice.Naglowek, invoice.Fa?.WZ),
     ],
+    footer: (currentPage, pageCount) => {
+      return {
+        text: `${currentPage.toString()} ${i18n.t('invoice.footer.pagesTotal')} ${pageCount}`,
+        alignment: Position.RIGHT,
+        margin: [0, 0, 40, 0],
+      };
+    },
     ...generateStyle(),
   };
+
+  return docDefinition;
 }
 
 export function generateFA1(invoice: Faktura, additionalData: AdditionalDataTypes): TCreatedPdf {

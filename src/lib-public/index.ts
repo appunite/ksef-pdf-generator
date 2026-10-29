@@ -1,8 +1,6 @@
-import { generateInvoice, buildInvoiceDocDefinition } from './generate-invoice';
-import { generatePDFUPO } from './UPO-generator';
+export { generateInvoice, buildInvoiceDocDefinition } from './generate-invoice';
+export { generatePDFUPO } from './UPO-generator';
+export { configureFonts } from './configure-fonts';
+export { i18nReady } from './i18n/i18n-init';
 
-export { generateInvoice, generatePDFUPO, buildInvoiceDocDefinition };
-export { buildFA1DocDefinition } from './FA1-generator';
-export { buildFA2DocDefinition } from './FA2-generator';
-export { buildFA3DocDefinition } from './FA3-generator';
-export { buildUPODocDefinition } from './UPO-generator';
+export type { FontConfig } from './configure-fonts';

@@ -90,3 +90,18 @@ npm run test:ci    # CI tests with coverage
 | `src/shared/consts/const.ts` | Centralized constants |
 | `src/shared/enums/common.enum.ts` | Shared enums (FormatTyp, etc.) |
 | `src/lib-public/generators/common/` | Common generators reused across schema versions |
+
+## This Fork
+
+`appunite/ksef-pdf-generator` follows `CIRFMF/ksef-pdf-generator` (remote `upstream`) and merges it
+whenever upstream releases. Keep the difference in `src/` to what the server needs: each generator
+split into `buildXDocDefinition` + `generateX`, and `buildInvoiceDocDefinition` in
+`generate-invoice.ts`. Everything else lives in `server/`, so a merge from upstream conflicts only
+there. A change that upstream would take goes to upstream as well.
+
+- `server/render.js` renders an invoice (PDF, or HTML through `render-html.js`) and classifies a
+  failure as a kind. Both entry points use it: `server/stdio.js` (length-prefixed frames on
+  stdin/stdout, for a parent process that holds it as a port) and `server/index.js` (HTTP).
+- **Never log a document or an error's message**: xml-js quotes the character it stopped at, and
+  the documents carry people's data. Log the request id and the kind (`errorKind`).
+- `npm run test:server` builds and runs `server/*.spec.ts` against the built library.
