@@ -26,7 +26,10 @@ import i18n from 'i18next';
 
 pdfMake.addVirtualFileSystem(pdfFonts);
 
-export function generateFA3(invoice: Faktura, additionalData: AdditionalDataTypes): TCreatedPdf {
+export function buildFA3DocDefinition(
+  invoice: Faktura,
+  additionalData: AdditionalDataTypes
+): TDocumentDefinitions {
   const isKOR_RABAT: boolean =
     invoice.Fa?.RodzajFaktury?._text == TRodzajFaktury.KOR && hasValue(invoice.Fa?.OkresFaKorygowanej);
   const rabatOrRowsInvoice: Content = isKOR_RABAT ? generateRabat(invoice.Fa!) : generateWiersze(invoice.Fa!);
@@ -65,5 +68,9 @@ export function generateFA3(invoice: Faktura, additionalData: AdditionalDataType
     ...generateStyle(),
   };
 
-  return pdfMake.createPdf(docDefinition);
+  return docDefinition;
+}
+
+export function generateFA3(invoice: Faktura, additionalData: AdditionalDataTypes): TCreatedPdf {
+  return pdfMake.createPdf(buildFA3DocDefinition(invoice, additionalData));
 }

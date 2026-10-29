@@ -32,10 +32,10 @@ import { SectionType } from '@shared/enums/pef-invoice.enum';
 
 pdfMake.addVirtualFileSystem(pdfFonts);
 
-export function generateCorrectivePEF(
+export function buildCorrectivePEFDocDefinition(
   invoice: PEFCorrectiveInvoice,
   additionalData: AdditionalDataTypes
-): TCreatedPdf {
+): TDocumentDefinitions {
   const content: Content[] = [];
 
   const UBLExtensionArray = getUBLExtensionArray(invoice);
@@ -83,5 +83,12 @@ export function generateCorrectivePEF(
     ...generateStyle(),
   };
 
-  return pdfMake.createPdf(docDefinition);
+  return docDefinition;
+}
+
+export function generateCorrectivePEF(
+  invoice: PEFCorrectiveInvoice,
+  additionalData: AdditionalDataTypes
+): TCreatedPdf {
+  return pdfMake.createPdf(buildCorrectivePEFDocDefinition(invoice, additionalData));
 }

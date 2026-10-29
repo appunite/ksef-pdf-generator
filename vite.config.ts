@@ -49,7 +49,7 @@ export default defineConfig(({ mode }) => {
         entryRoot: libRoot,
         insertTypesEntry: true,
         outDir: path.resolve(__dirname, 'dist'),
-        exclude: ['src/app-public'],
+        exclude: ['src/app-public', 'server'],
       }),
     ],
 

@@ -25,7 +25,10 @@ import { generateInvoiceLine } from './generators/PEF/InvoiceLine';
 
 pdfMake.addVirtualFileSystem(pdfFonts);
 
-export function generateSpecPEF(invoice: PEFSpecInvoice, additionalData: AdditionalDataTypes): TCreatedPdf {
+export function buildSpecPEFDocDefinition(
+  invoice: PEFSpecInvoice,
+  additionalData: AdditionalDataTypes
+): TDocumentDefinitions {
   const content: Content[] = [];
 
   const UBLExtensionArray = getUBLExtensionArray(invoice);
@@ -65,5 +68,9 @@ export function generateSpecPEF(invoice: PEFSpecInvoice, additionalData: Additio
     ...generateStyle(),
   };
 
-  return pdfMake.createPdf(docDefinition);
+  return docDefinition;
+}
+
+export function generateSpecPEF(invoice: PEFSpecInvoice, additionalData: AdditionalDataTypes): TCreatedPdf {
+  return pdfMake.createPdf(buildSpecPEFDocDefinition(invoice, additionalData));
 }

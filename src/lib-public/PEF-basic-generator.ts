@@ -23,7 +23,10 @@ import { generateInvoiceLine } from './generators/PEF/InvoiceLine';
 
 pdfMake.addVirtualFileSystem(pdfFonts);
 
-export function generateBasicPEF(invoice: PEFBasicInvoice, additionalData: AdditionalDataTypes): TCreatedPdf {
+export function buildBasicPEFDocDefinition(
+  invoice: PEFBasicInvoice,
+  additionalData: AdditionalDataTypes
+): TDocumentDefinitions {
   const content: Content[] = [];
 
   content.push(
@@ -54,5 +57,9 @@ export function generateBasicPEF(invoice: PEFBasicInvoice, additionalData: Addit
     ...generateStyle(),
   };
 
-  return pdfMake.createPdf(docDefinition);
+  return docDefinition;
+}
+
+export function generateBasicPEF(invoice: PEFBasicInvoice, additionalData: AdditionalDataTypes): TCreatedPdf {
+  return pdfMake.createPdf(buildBasicPEFDocDefinition(invoice, additionalData));
 }

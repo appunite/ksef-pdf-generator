@@ -139,3 +139,80 @@ Biblioteka wspiera lokalizację, poprzez użycie biblioteki i18next. Pliki z tł
 ## Ważne!!!
 
 Dodano obsługę faktur PEF - W najbliższym wydaniu będą dostępne na produkcji.
+
+---
+
+## Serwer (fork Appunite)
+
+Ten fork dodaje do biblioteki CIRFMF serwer: XML na wejściu, PDF lub HTML na wyjściu. Zmiany w
+`src/` są ograniczone do podziału każdego generatora na `buildXDocDefinition` i `generateX` oraz
+do `buildInvoiceDocDefinition` obok `generateInvoice`, żeby HTML powstawał z tej samej definicji
+dokumentu co PDF. Reszta jest w `server/`.
+
+Oba wejścia przyjmują numer KSeF (wyświetlany w nagłówku i pod kodem QR) i link KOD I (kod QR).
+Błąd zgłaszają jako rodzaj: `parse_error`, `unsupported_schema`, `unknown_format` lub
+`render_error`. Logi nigdy nie zawierają treści dokumentu.
+
+### Proces stdio (`server/stdio.js`)
+
+Dla aplikacji, która trzyma generator jako proces potomny (np. port w Erlang/Elixir), bez
+otwierania portu sieciowego. Każda wiadomość w obie strony to 4-bajtowa długość (big-endian) i tyle
+bajtów: 4-bajtowa długość nagłówka JSON, nagłówek, a potem treść.
+
+| Kierunek | Nagłówek | Treść |
+|----------|----------|-------|
+| żądanie | `{"format": "pdf" \| "html", "ksef_number"?: "...", "qr_url"?: "..."}` | XML faktury |
+| odpowiedź | `{"ok": true}` | PDF lub HTML |
+| odpowiedź | `{"ok": false, "kind": "parse_error"}` | brak |
+
+Żądania są obsługiwane po kolei. stdout niesie wyłącznie odpowiedzi, a stderr linię na każdy błąd.
+Proces kończy się z kodem 0, gdy zamknie się stdin.
+
+```bash
+npm run build
+node server/stdio.js
+```
+
+### Serwer HTTP (`server/index.js`)
+
+```bash
+npm run build
+node server/index.js
+```
+
+Serwer nasłuchuje na porcie `3001` (zmiana przez zmienną środowiskową `PORT`).
+
+| Metoda | Ścieżka | Opis |
+|--------|---------|------|
+| `POST` | `/generate/pdf` | Wyślij XML, otrzymaj PDF |
+| `POST` | `/generate/html` | Wyślij XML, otrzymaj HTML |
+| `GET` | `/health` | Health check (`{"status":"ok"}`) |
+
+Opcjonalne nagłówki: `X-KSeF-Number` (numer KSeF) i `X-KSeF-QRCode` (link KOD I).
+
+```bash
+curl -X POST \
+  -H 'Content-Type: application/xml' \
+  -H 'X-KSeF-Number: 5555555555-20250808-9231003CA67B-BE' \
+  -H 'X-KSeF-QRCode: https://qr-test.ksef.mf.gov.pl/invoice/...' \
+  --data-binary @assets/invoice.xml \
+  http://localhost:3001/generate/pdf -o faktura.pdf
+```
+
+### Testy i Docker
+
+```bash
+npm run test:server
+docker build -t ksef-pdf .
+docker run -p 3001:3001 ksef-pdf
+```
+
+### Aktualizacja z upstreamu
+
+```bash
+git fetch upstream
+git merge upstream/main
+```
+
+Konflikty mogą dotyczyć tylko generatorów w `src/lib-public/*-generator.ts`, `generate-invoice.ts`
+i plików `index.ts`. Po scaleniu trzeba uruchomić `npm run test:ci` i `npm run test:server`.
