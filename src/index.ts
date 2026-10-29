@@ -1,6 +1,6 @@
 import i18next from 'i18next';
 
-export { generateInvoice, generatePDFUPO } from './lib-public';
+export { generateInvoice, generatePDFUPO, buildInvoiceDocDefinition } from './lib-public';
 export { generateFA1 } from './lib-public/FA1-generator';
 export { generateFA2 } from './lib-public/FA2-generator';
 export { generateFA3 } from './lib-public/FA3-generator';

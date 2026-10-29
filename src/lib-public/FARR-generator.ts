@@ -19,7 +19,7 @@ import i18n from 'i18next';
 
 pdfMake.addVirtualFileSystem(pdfFonts);
 
-export function generateFARR(invoice: FaRR, additionalData: AdditionalDataTypes): TCreatedPdf {
+export function buildFARRDocDefinition(invoice: FaRR, additionalData: AdditionalDataTypes): TDocumentDefinitions {
   const docDefinition: TDocumentDefinitions = {
     ...generateWatermark(additionalData?.watermark),
     content: [
@@ -43,5 +43,9 @@ export function generateFARR(invoice: FaRR, additionalData: AdditionalDataTypes)
     ...generateStyle(),
   };
 
-  return pdfMake.createPdf(docDefinition);
+  return docDefinition;
+}
+
+export function generateFARR(invoice: FaRR, additionalData: AdditionalDataTypes): TCreatedPdf {
+  return pdfMake.createPdf(buildFARRDocDefinition(invoice, additionalData));
 }

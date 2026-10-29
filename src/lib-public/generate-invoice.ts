@@ -1,12 +1,13 @@
-import { generateFA1 } from './FA1-generator';
+import { buildFA1DocDefinition, generateFA1 } from './FA1-generator';
 import { Faktura as Faktura1 } from './types/fa1.types';
-import { generateFA2 } from './FA2-generator';
+import { buildFA2DocDefinition, generateFA2 } from './FA2-generator';
 import { Faktura as Faktura2 } from './types/fa2.types';
-import { generateFA3 } from './FA3-generator';
+import { buildFA3DocDefinition, generateFA3 } from './FA3-generator';
 import { Faktura as Faktura3 } from './types/fa3.types';
 import { TCreatedPdf } from 'pdfmake/build/pdfmake';
 import { AdditionalDataTypes } from './types/common.types';
-import { generateFARR } from './FARR-generator';
+import { buildFARRDocDefinition, generateFARR } from './FARR-generator';
+import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import { FaRR } from './types/FaRR.types';
 import { parseXML } from '@shared/XML-parser';
 import { i18nReady } from './i18n/i18n-init';
@@ -82,3 +83,27 @@ export async function generateInvoice(
 
 type FormatType = 'blob' | 'base64';
 type FormatTypeResult = Blob | string;
+
+export async function buildInvoiceDocDefinition(
+  file: File,
+  additionalData: AdditionalDataTypes
+): Promise<TDocumentDefinitions> {
+  const xml: unknown = await parseXML(file);
+  const wersja: any = (xml as any)?.Faktura?.Naglowek?.KodFormularza?._attributes?.kodSystemowy;
+
+  await i18nReady;
+
+  switch (wersja) {
+    case 'FA (1)':
+      return buildFA1DocDefinition((xml as any).Faktura as Faktura1, additionalData);
+    case 'FA (2)':
+      return buildFA2DocDefinition((xml as any).Faktura as Faktura2, additionalData);
+    case 'FA (3)':
+      return buildFA3DocDefinition((xml as any).Faktura as Faktura3, additionalData);
+    case 'FA_RR (1)':
+    case 'FA_RR(1)':
+      return buildFARRDocDefinition((xml as any).Faktura as FaRR, additionalData);
+    default:
+      throw new Error(`Unknown XML Version: ${wersja}`);
+  }
+}
